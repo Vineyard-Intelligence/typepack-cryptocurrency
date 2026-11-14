@@ -1,0 +1,432 @@
+{
+  "identifier": "run.vineyard.typepacks.cryptocurrency",
+  "content_type": "vineyard:typepack",
+  "version": "1.0.0",
+  "name": "Cryptocurrency",
+  "summary": "Cryptocurrency addresses, transactions, tokens and non-custodial services on every chain, identified by network as well as value: the same string on Bitcoin and Bitcoin Cash, or on Ethereum and BSC, is two nodes. Public identifiers only.",
+  "description": "Reach for it to follow funds on-chain: from an address through its transactions and tokens to the services and exchanges it touches. One set of types covers every chain and `network` says which, because the same string is a different account elsewhere: a `1…` address on Bitcoin and on Bitcoin Cash, or one `0x…` address on Ethereum and on BSC, hold different funds and are separate nodes.\n\n- **Letter case.** Hex, bech32, CashAddr and TON raw values match whatever their case, so an EIP-55 checksummed address and its lower-case form are one node. Base58 values (legacy Bitcoin, TRON, Solana, Monero, XRPL) are compared exactly.\n- **Network not established.** `evm` is a `0x…` address whose chain is not known yet, `unknown` any other address whose network neither the source nor the format settles. Each stays its own node and links to the node on an established network with `same address on`, which for a contract does not mean the same owner.\n- **Exchanges and other custodians** (OTC desks, custodial wallets, payment processors that hold funds) are the Financial pack's `financial.exchange`; `crypto_service` is for services that do not hold customer funds.\n- **Amounts** are decimal strings in the network's native unit: full precision, but they do not sort as numbers.\n- **Link labels:** `sent to`, `deployed`, `input to`, `output to`, `token contract`, `attributed to`, `same address on`, `listed address`, `accepts payment to`, `same as`.\n- **CAIP-2 chain ids:** bitcoin `bip122:000000000019d6689c085ae165831e93`, bitcoin_cash `bip122:000000000000000000651ef99cb9fcbe`, litecoin `bip122:12a765e31ffd4059bada1e25190f6e98`, dogecoin `bip122:1a91e3dace36e2be3bf030a65679fe82`; the EVM chains `eip155:` plus their chain id (ethereum 1, ethereum_classic 61, bsc 56, polygon 137, arbitrum 42161, optimism 10, base 8453, avalanche_c 43114); tron `tron:728126428`, solana `solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp`, xrpl `xrpl:0`, ton `tvm:-239`; drafts bitcoin_sv `bsv:mainnet`, monero `monero:418015bb9ae982a1975da7d79277c270`, bnb_beacon `cosmos:Binance-Chain-Tigris`; cardano proposed as `cardano:1-764824073`. bitcoin_gold, dash, zcash and verge have none registered; `evm` and `unknown` none by definition.\n\n**Source:** https://github.com/Vineyard-Intelligence/typepack-cryptocurrency (`typepacks/cryptocurrency.json`). Licence: Apache-2.0.",
+  "authors": [
+    {
+      "name": "VINEYARD",
+      "url": "https://vineyard.run"
+    }
+  ],
+  "license": "Apache-2.0",
+  "marketing_url": "https://vineyard.run/typepacks/cryptocurrency",
+  "thumbnail_url": "https://vineyard.run/typepacks/cryptocurrency/icon.png",
+  "types": [
+    {
+      "category": "cryptocurrency",
+      "name": "crypto_address",
+      "display_name": "Crypto Address",
+      "description": "A public address on one network. The same string on another network is another node, and `evm` or `unknown` holds an address whose network is not established yet.",
+      "label_property": "address",
+      "identity_properties": [
+        "network",
+        "address",
+        "memo"
+      ],
+      "label_template": "{address} · {network}",
+      "icon": "wallet",
+      "color": "#f7931a",
+      "properties": {
+        "network": {
+          "type": "enum",
+          "description": "The network the address is on. `evm`: a 0x address whose chain is not established; `unknown`: neither the source nor the format settles it.",
+          "optional": false,
+          "enum": [
+            "bitcoin",
+            "bitcoin_cash",
+            "bitcoin_sv",
+            "bitcoin_gold",
+            "litecoin",
+            "dogecoin",
+            "dash",
+            "zcash",
+            "monero",
+            "verge",
+            "ethereum",
+            "ethereum_classic",
+            "bsc",
+            "polygon",
+            "arbitrum",
+            "optimism",
+            "base",
+            "avalanche_c",
+            "evm",
+            "tron",
+            "solana",
+            "xrpl",
+            "ton",
+            "cardano",
+            "bnb_beacon",
+            "unknown"
+          ]
+        },
+        "address": {
+          "type": "string",
+          "description": "The address in its canonical form. Hex, bech32, CashAddr and TON raw values match whatever their letter case; Base58 is compared exactly.",
+          "optional": false,
+          "normalize": "crypto_address"
+        },
+        "memo": {
+          "type": "string",
+          "description": "A value given together with the address that selects the recipient behind it, such as an XRPL destination tag. Empty on most networks.",
+          "optional": true
+        },
+        "address_kind": {
+          "type": "enum",
+          "description": "What the address is: an externally owned account or a contract, a Bitcoin-family script type, a token account.",
+          "optional": true,
+          "enum": [
+            "eoa",
+            "contract",
+            "p2pkh",
+            "p2sh",
+            "p2wpkh",
+            "p2wsh",
+            "p2tr",
+            "multisig",
+            "token_account",
+            "unknown"
+          ]
+        },
+        "first_seen": {
+          "type": "datetime",
+          "description": "First on-chain activity.",
+          "optional": true
+        },
+        "last_seen": {
+          "type": "datetime",
+          "description": "Latest on-chain activity.",
+          "optional": true
+        },
+        "tx_count": {
+          "type": "integer",
+          "description": "Number of transactions involving the address.",
+          "optional": true,
+          "validator": {
+            "min": 0
+          }
+        },
+        "balance": {
+          "type": "string",
+          "description": "Balance as a decimal string in the network's native unit (BTC, ETH, TRX, …).",
+          "optional": true,
+          "validator": {
+            "regex": "^\\d+(\\.\\d+)?$"
+          }
+        },
+        "balance_as_of": {
+          "type": "datetime",
+          "description": "When the balance was read.",
+          "optional": true
+        },
+        "balance_source": {
+          "type": "string",
+          "description": "Where the balance was read. Services count some outputs differently, so two sources can disagree.",
+          "optional": true
+        },
+        "activated_at": {
+          "type": "datetime",
+          "description": "When the address was activated or first funded (TRON activation, XRPL account creation, first incoming transfer).",
+          "optional": true
+        },
+        "first_funder": {
+          "type": "string",
+          "description": "The address that sent the first funds.",
+          "optional": true
+        },
+        "first_funding_tx": {
+          "type": "string",
+          "description": "Hash of the first funding transaction.",
+          "optional": true
+        },
+        "deployer": {
+          "type": "string",
+          "description": "For a contract, the address that deployed it.",
+          "optional": true
+        },
+        "deployment_tx": {
+          "type": "string",
+          "description": "For a contract, the hash of its deployment transaction.",
+          "optional": true
+        },
+        "public_label": {
+          "type": "string",
+          "description": "A public label or tag, e.g. an exchange's hot wallet.",
+          "optional": true
+        },
+        "label_source": {
+          "type": "string",
+          "description": "Who published the label.",
+          "optional": true
+        },
+        "frozen_by_issuer": {
+          "type": "string",
+          "description": "The stablecoin whose issuer has frozen this address, e.g. \"USDT (Tether)\".",
+          "optional": true
+        },
+        "sanctioned": {
+          "type": "boolean",
+          "description": "Listed on a sanctions list.",
+          "optional": true
+        },
+        "sanctions_programs": {
+          "type": "array",
+          "description": "Sanctions programmes the listing names, one entry each (e.g. CYBER2, DPRK3).",
+          "optional": true
+        },
+        "sanctions_as_of": {
+          "type": "date",
+          "description": "Date of the list the sanctions fields come from.",
+          "optional": true
+        },
+        "history_examined": {
+          "type": "integer",
+          "description": "Transactions read when the history was examined.",
+          "optional": true,
+          "validator": {
+            "min": 0
+          }
+        },
+        "history_complete": {
+          "type": "boolean",
+          "description": "Whether the whole history was read; false when a run stopped at its limit.",
+          "optional": true
+        }
+      }
+    },
+    {
+      "category": "cryptocurrency",
+      "name": "crypto_transaction",
+      "display_name": "Crypto Transaction",
+      "description": "One on-chain transaction. Chains that forked share their earlier history, so the same txid can exist on Bitcoin and Bitcoin Cash, and `network` says which one this is.",
+      "label_property": "tx_hash",
+      "identity_properties": [
+        "network",
+        "tx_hash"
+      ],
+      "label_template": "{tx_hash} · {network}",
+      "icon": "arrow-left-right",
+      "color": "#fde047",
+      "properties": {
+        "network": {
+          "type": "enum",
+          "description": "The network the transaction is on.",
+          "optional": false,
+          "enum": [
+            "bitcoin",
+            "bitcoin_cash",
+            "bitcoin_sv",
+            "bitcoin_gold",
+            "litecoin",
+            "dogecoin",
+            "dash",
+            "zcash",
+            "monero",
+            "verge",
+            "ethereum",
+            "ethereum_classic",
+            "bsc",
+            "polygon",
+            "arbitrum",
+            "optimism",
+            "base",
+            "avalanche_c",
+            "evm",
+            "tron",
+            "solana",
+            "xrpl",
+            "ton",
+            "cardano",
+            "bnb_beacon",
+            "unknown"
+          ]
+        },
+        "tx_hash": {
+          "type": "hash",
+          "description": "Transaction hash or id. A 64-hex hash matches with or without 0x and in either case; other forms, such as a Solana signature, are compared exactly.",
+          "optional": false,
+          "normalize": "hex"
+        },
+        "block_height": {
+          "type": "integer",
+          "description": "Height of the block that includes it.",
+          "optional": true,
+          "validator": {
+            "min": 0
+          }
+        },
+        "block_time": {
+          "type": "datetime",
+          "description": "Time of that block.",
+          "optional": true
+        },
+        "status": {
+          "type": "enum",
+          "description": "Outcome on chain.",
+          "optional": true,
+          "enum": [
+            "success",
+            "failed",
+            "pending"
+          ]
+        },
+        "fee": {
+          "type": "string",
+          "description": "Fee paid, as a decimal string in the network's native unit.",
+          "optional": true,
+          "validator": {
+            "regex": "^\\d+(\\.\\d+)?$"
+          }
+        },
+        "tx_kind": {
+          "type": "enum",
+          "description": "What the transaction does.",
+          "optional": true,
+          "enum": [
+            "transfer",
+            "contract_call",
+            "contract_creation",
+            "coinbase",
+            "other"
+          ]
+        }
+      }
+    },
+    {
+      "category": "cryptocurrency",
+      "name": "crypto_token",
+      "display_name": "Crypto Token",
+      "description": "A token on one network: an ERC-20 or NFT contract, a TRC-20, an SPL mint, a jetton, an XRPL issued currency. Its contract is also a Crypto Address, linked to this node by `token contract`. Native assets (BTC, ETH, TRX) have no token node.",
+      "label_property": "contract_address",
+      "identity_properties": [
+        "network",
+        "contract_address"
+      ],
+      "label_template": "{symbol} · {network}",
+      "icon": "coins",
+      "color": "#86efac",
+      "properties": {
+        "network": {
+          "type": "enum",
+          "description": "The network the token is on.",
+          "optional": false,
+          "enum": [
+            "bitcoin",
+            "bitcoin_cash",
+            "bitcoin_sv",
+            "bitcoin_gold",
+            "litecoin",
+            "dogecoin",
+            "dash",
+            "zcash",
+            "monero",
+            "verge",
+            "ethereum",
+            "ethereum_classic",
+            "bsc",
+            "polygon",
+            "arbitrum",
+            "optimism",
+            "base",
+            "avalanche_c",
+            "evm",
+            "tron",
+            "solana",
+            "xrpl",
+            "ton",
+            "cardano",
+            "bnb_beacon",
+            "unknown"
+          ]
+        },
+        "contract_address": {
+          "type": "string",
+          "description": "The token's contract address; for Solana the mint, for XRPL currency.issuer.",
+          "optional": false,
+          "normalize": "crypto_address"
+        },
+        "standard": {
+          "type": "enum",
+          "description": "Token standard.",
+          "optional": true,
+          "enum": [
+            "erc20",
+            "erc721",
+            "erc1155",
+            "trc20",
+            "trc10",
+            "spl",
+            "jetton",
+            "xrpl_issued",
+            "other"
+          ]
+        },
+        "symbol": {
+          "type": "string",
+          "description": "Ticker symbol, as the contract states it.",
+          "optional": true
+        },
+        "name": {
+          "type": "string",
+          "description": "Token name, as the contract states it.",
+          "optional": true
+        },
+        "decimals": {
+          "type": "integer",
+          "description": "Decimal places of the token's unit.",
+          "optional": true,
+          "validator": {
+            "min": 0
+          }
+        },
+        "issuer": {
+          "type": "string",
+          "description": "Who issues the token, e.g. Tether.",
+          "optional": true
+        }
+      }
+    },
+    {
+      "category": "cryptocurrency",
+      "name": "crypto_service",
+      "display_name": "Crypto Service",
+      "description": "A service that moves funds without holding them for customers: a mixer, bridge, gambling site, merchant or DeFi protocol. An exchange, OTC desk, custodial wallet or payment processor that holds funds is a financial.exchange.",
+      "label_property": "name",
+      "icon": "shuffle",
+      "color": "#67e8f9",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Service name.",
+          "optional": false
+        },
+        "service_type": {
+          "type": "enum",
+          "description": "What kind of service it is.",
+          "optional": true,
+          "enum": [
+            "mixer",
+            "bridge",
+            "gambling",
+            "merchant",
+            "defi",
+            "unknown"
+          ]
+        },
+        "website": {
+          "type": "url",
+          "description": "The service's website.",
+          "optional": true
+        },
+        "attribution_source": {
+          "type": "string",
+          "description": "Where the identification of the service comes from.",
+          "optional": true
+        }
+      }
+    }
+  ]
+}
